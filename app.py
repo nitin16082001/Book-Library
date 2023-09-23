@@ -223,7 +223,7 @@ def upload_book():
                 img_file.save(img_filename)
             
             if pdf_file:
-                pdf_filename = os.path.join('static/Uploads/Books', secure_filename(pdf_file.filename))
+                pdf_filename = os.path.join('static/Uploads/Books', pdf_file.filename)
                 pdf_file.save(pdf_filename)
     
             new_book = Book(
