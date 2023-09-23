@@ -1,0 +1,65 @@
+{% extends 'admin.html' %}
+{% block main %}
+<main>
+    <div class="modal" id="userForm">
+        <div class="modal-dialog model-dialog-centered model-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit Book details.</h4>
+                    <a href="/manage_books" class="btn-close" id="closeModal" aria-label="Close"><i class='bx bx-x'></i></a>
+                </div>
+                <div class="modal-body">
+                    <form action="/update_book/{{ book.id }}" method="post" class="registration-form">
+                        {% if book %}
+                        <div class="form-group">
+                            <input type="text" id="title" value="{{book.title}}" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="writer" value="{{book.writer}}" name="writer" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="category" value="{{book.category}}" id="category" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Update Book">
+                        </div>
+                        {% else %}
+                        <!-- The 'user' variable is not available -->
+                        <p>User data not found.</p>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // JavaScript to show the modal when the "Edit" button is clicked
+    const editButton = document.querySelector('.my-btn-success');
+    const userForm = document.getElementById('userForm');
+
+    if (editButton && userForm) {
+        editButton.addEventListener('click', function () {
+            // const userName = editButton.getAttribute('data-user-name');
+            // const userEmail = editButton.getAttribute('data-user-email');
+            // const userPassword = editButton.getAttribute('data-user-password');
+            // const userRole = editButton.getAttribute('data-user-role');
+
+            // document.getElementById('name').value = userName;
+            // document.getElementById('email').value = userEmail;
+            // document.getElementById('password').value = userPassword;
+            // document.getElementById('role').value = userRole;
+
+            userForm.style.display = "block";
+        });
+    }
+
+    // Check if the URL contains '/update_user/' to display the form
+    const currentURL = window.location.pathname;
+    if (currentURL.includes('/update_book/')) {
+        userForm.style.display = "block";
+    }
+</script>
+
+{% endblock main %}

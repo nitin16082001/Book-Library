@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!----title------------>
+    <title>ज्ञानामृत - Books</title>
+
+
+    <!---stylesheet-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Home.css') }}">
+
+    <!---google font link-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,500;0,700;1,300;1,400;1,600&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+
+    <!-----font awesome  cdn /content delivery network -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <!------header--------->
+    <div class="header header-one">
+        <div class="container">
+            <div class="navbar">
+                <div class="logo">
+                    <a href="/home"><img src="{{ url_for('static', filename='Images/logo.png') }}" width="125px"></a>
+                </div>
+                <nav>
+                    <ul id="MenuIcons">
+                        <li><a href="/home">Home</a></li>
+                        <li><a href="/books">Explore Books</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li style="margin-left: 100px;">
+                            <span style="font-size: 18px; font-weight: 600;">{{user}}</span>&nbsp;
+                            <a href="/logout" class="btn1">Logout</a>
+                        </li>
+                    </ul>
+                </nav>
+                <img src="{{ url_for('static', filename='Images/menu.png') }}" class="menu-icon" onclick="Menutoggle()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Explore ALl Books -->
+
+    <div class="small-container">
+        <h1 class="title" style="font-size: 36px; margin-top: 30px;">Explore All Available Books</h1>
+        <div class="row">
+            {% for book in books %}
+            <div class="col-4">
+                <a href="{{ url_for('static', filename='Uploads/Books/' + book.pdf_file) }}">
+                    <img src="{{ url_for('static', filename='Uploads/Covers/' + book.img_file) }}"></a>
+                <a href="{{ url_for('static', filename='Uploads/Books/' + book.pdf_file) }}">
+                    <h4 style="text-align: center;">Title: {{ book.title }}</h4>
+                </a>
+                <p style="text-align: center;">Writer: {{book.writer}}</p>
+                <p style="text-align: center;">Category: {{ book.category }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div class="page-btn" style="margin-left: 40px;">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('list_books', page=current_page-1) }}" style="text-decoration: none; color: black;"><i class='bx bxs-chevron-left'></i><strong style="font-weight: 500; margin-right: 10px; margin-left: 20px;">Prev</strong></a>
+            {% endif %}
+            
+            {% for page_num in range(1, total_pages+1) %}
+                <span{% if page_num == current_page %} class="active"{% endif %}>
+                    <a href="{{ url_for('list_books', page=page_num) }}" style="text-decoration: none; color: black;">{{ page_num }}</a>
+                </span>
+            {% endfor %}
+            
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('list_books', page=current_page+1) }}" style="text-decoration: none; color: black;"><strong style="font-weight: 500; margin-right: 10px; margin-left: 20px;">Next</strong><i class='bx bxs-chevron-right'></i></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!--------footer------>
+    <div class="footer">
+        <div class="container">
+            <div class="row">
+
+                <div class="footer-col-2">
+                    <img src="{{ url_for('static', filename='Images/logo-white.png') }}">
+                    <p>
+                        My primary goal in developing this service is to nurture a love for reading among people. With this platform, anyone can access and read all available books 24/7, completely free of charge.
+                    </p>
+                </div>
+
+                <div class="footer-col-4">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><i class='bx bxl-gmail' ></i> nitin16082001@gmail.com</li>
+                        <li><i class='bx bxl-whatsapp' ></i> +91 8766854465</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <p class="copyright">Copyright-2023 - Nitin Yadav</p>
+        </div>
+    </div>
+
+    <script>
+        let MenuIcons = document.getElementById("MenuIcons");
+        let titlelbl = document.querySelector(".title");
+        MenuIcons.style.maxHeight = "0px";
+    
+        function Menutoggle() {
+            if (MenuIcons.style.maxHeight == "0px") {
+                MenuIcons.style.maxHeight = "200px";
+                titlelbl.style.display = "none"; // Hide the title
+            } else {
+                MenuIcons.style.maxHeight = "0px";
+                titlelbl.style.display = "block"; // Show the title
+            }
+        }
+    </script>
+</body>
+
+</html>

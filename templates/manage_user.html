@@ -1,0 +1,145 @@
+{% extends 'admin.html' %}
+{% block main %}
+<main>
+    <div class="head-title">
+        <div class="left">
+            <h1>Manage Users</h1>
+            <ul class="breadcrumb">
+                <li>
+                    <a href="#">Dashboard</a>
+                </li>
+                <li><i class="bx bx-chevron-right"></i></li>
+                <li>
+                    <a class="active" href="#">Manage Users</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <!-- Button to trigger the modal -->
+        <button class="mui-button" id="openModal">New User <i class='bx bx-group' style="font-size: 20px;"></i></button>
+    </div>
+
+    <div class="table-data">
+        <div class="order">
+            <div class="head">
+                <h3>Recently Added Users</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Name</th>
+                        <th>E-mail</th>
+                        <th>Password</th>
+                        <th>Role</th>
+                        <th>Registered At</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in user %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.password }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>{{ user.regAt }}</td>
+                        <td>
+                            <a href="/update_user/{{ user.id }}" class="my-btn-success" data-user-name="{{ user.name }}"
+                                data-user-email="{{ user.email }}" data-user-password="{{ user.password }}"
+                                data-user-role="{{ user.role }}">
+                                <i class='bx bxs-edit'></i>
+                            </a>
+                            <a href="/delete_user/{{ user.id }}" class="my-btn-danger"><i class='bx bx-trash'></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="userForm">
+        <div class="modal-dialog model-dialog-centered model-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Register new user.</h4>
+                    <button type="button" class="btn-close" id="closeModal" aria-label="Close"><i
+                            class='bx bx-x'></i></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/register_user" method="post" class="registration-form" autocomplete="off"
+                        onsubmit="return validateRegistration()">
+                        <div class="form-group">
+                            <input type="text" id="name" placeholder="First Name & Last Name" name="name" required
+                                autocomplete="new-name">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="email" placeholder="E-mail" name="email" required
+                                autocomplete="new-email">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" name="password" placeholder="Password" id="password" required
+                                autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" name="password" placeholder="Confirm Password" id="confirm_password"
+                                required autocomplete="new-confpassword">
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Register">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        function validateRegistration() {
+            const password = document.getElementById('password').value;
+            const confirm_password = document.getElementById('confirm_password').value;
+            if (password !== confirm_password) {
+                alert("Passwords do not match.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+    <script>
+        // Get references to the modal and buttons
+        var modal = document.getElementById("userForm");
+        var openModalButton = document.getElementById("openModal");
+        var closeModalButton = document.getElementById("closeModal");
+
+        // Open the modal when the "New User" button is clicked
+        openModalButton.onclick = function () {
+            modal.style.display = "block";
+        };
+
+        // Close the modal when the close button is clicked
+        closeModalButton.onclick = function () {
+            modal.style.display = "none";
+        };
+
+        // Close the modal when clicking outside of it
+        window.onclick = function (event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
+    </script>
+
+    <script>
+        manage_user = document.querySelector('section ul #users');
+        manage_user.classList.add('active');
+    </script>
+</main>
+{% endblock main %}

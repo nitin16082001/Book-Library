@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and registration form</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body> 
+    <div class="hero">
+        <div class="form-box">
+            <br>
+            <h4>For Change Password or Forget Account, Visit ज्ञानामृत Development Team Member</h4>
+            <div class="button-box">
+                <div id="btn"></div>
+                <button type="button" class="toggle-btn" onclick="login()">Log In</button>
+                <button type="button" class="toggle-btn" onclick="register()">Register</button>
+            </div>
+
+            <form action="/login" onsubmit="return validation()" method="post" autocomplete="off">
+                <div id="login" class="input-group">
+                    <br><br>
+                    <input type="text" class="input-field" placeholder="E-mail" name="username" autocomplete="new-username" required>
+                    <input type="password" class="input-field" placeholder="Password" name="passWord" autocomplete="new-password" required>
+                    <br><br><br>
+                    <button type="submit" class="submit-btn">Log In</button><br>
+                    <h4 style="font-size: 15px;">Developed By: Nitin Yadav</h4>
+                    <h4 style="font-size: 15px; padding-top: 10px;">Contact: nitin16082001@gmail.com</h4>
+                </div><br>
+            </form>
+            
+            <form action="/register" method="post" onsubmit="return validateRegistration()">
+                <div class="input-group" id="register">
+                    <br>
+                    <input type="text" class="input-field" placeholder="First Name & Last Name" name="uname" autocomplete="new-name" required>
+                    <input type="email" class="input-field" placeholder="E-mail ID" name="email" autocomplete="new-email" required>
+                    <input type="password" class="input-field" placeholder="Password" name="password" id="password" autocomplete="new-password" required>
+                    <input type="password" class="input-field" placeholder="Confirm Password" name="confirm_password" id="confirm_password" autocomplete="new-password" required> <br>
+                    <br><br>
+                    <button type="submit" class="submit-btn">Register</button><br>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function validateRegistration() {
+            const password = document.getElementById('password').value;
+            const confirm_password = document.getElementById('confirm_password').value;
+            if (password !== confirm_password) {
+                alert("Passwords do not match.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const message = '{{ message }}';
+            const redirect_url = '{{ redirect_url }}';
+
+            if (message) {
+                alert(message);
+            }
+
+            if (redirect_url) {
+                window.location.href = redirect_url;
+            }  
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</body>
+</html>

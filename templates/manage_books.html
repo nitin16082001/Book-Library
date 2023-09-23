@@ -1,0 +1,150 @@
+{% extends 'admin.html' %}
+{% block main %}
+<main>
+    <div class="head-title">
+        <div class="left">
+            <h1>Manage Books</h1>
+            <ul class="breadcrumb">
+                <li>
+                    <a href="#">Dashboard</a>
+                </li>
+                <li><i class="bx bx-chevron-right"></i></li>
+                <li>
+                    <a class="active" href="#">Manage Books</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <!-- Button to trigger the modal -->
+        <button class="mui-button" id="openModal">New Book <i class='bx bxs-book-add' style="font-size: 20px;"></i></button>
+    </div>
+
+    <div class="table-data">
+        <div class="order">
+            <div class="head">
+                <h3>Recently Added Books</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Title</th>
+                        <th>Writer</th>
+                        <th>Category</th>
+                        <th>Image Path</th>
+                        <th>PDF Path</th>
+                        <th>Added By</th>
+                        <th>Registered At</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in books %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ book.title }}</td>
+                        <td>{{ book.writer }}</td>
+                        <td>{{ book.category }}</td>
+                        <td>{{ book.img_file }}</td>
+                        <td>{{ book.pdf_file }}</td>
+                        <td>{{ book.added_by }}</td>
+                        <td>{{ book.added_at }}</td>
+                        <td>
+                            <a href="/update_book/{{book.id}}" class="my-btn-success">
+                                <i class='bx bxs-edit'></i>
+                            </a>
+                            <a href="/delete_book/{{book.id}}" class="my-btn-danger"><i class='bx bx-trash'></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="userForm">
+        <div class="modal-dialog model-dialog-centered model-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Register new Book.</h4>
+                    <button type="button" class="btn-close" id="closeModal" aria-label="Close"><i
+                            class='bx bx-x'></i></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/upload_book" method="post" class="registration-form" enctype="multipart/form-data" autocomplete="off">
+                        <div class="form-group">
+                            <input type="text" id="name" placeholder="Book Title" name="title" required
+                                autocomplete="new-name">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="writer" placeholder="Writer" name="writer" required
+                                autocomplete="new-writer">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="category" placeholder="Category" id="category" required
+                                autocomplete="new-category">
+                        </div>
+                        <div class="form-group">
+                            <input type="file" accept=".png,jpg,jpeg" name="img_file" id="img_file"
+                                required autocomplete="new-imgfile">
+                        </div>
+                        <div class="form-group">
+                            <input type="file" accept=".pdf" name="pdf_file" id="pdf_file"
+                                required autocomplete="new-pdffile">
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Upload Book">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        function validateRegistration() {
+            const password = document.getElementById('password').value;
+            const confirm_password = document.getElementById('confirm_password').value;
+            if (password !== confirm_password) {
+                alert("Passwords do not match.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+    <script>
+        // Get references to the modal and buttons
+        var modal = document.getElementById("userForm");
+        var openModalButton = document.getElementById("openModal");
+        var closeModalButton = document.getElementById("closeModal");
+
+        // Open the modal when the "New User" button is clicked
+        openModalButton.onclick = function () {
+            modal.style.display = "block";
+        };
+
+        // Close the modal when the close button is clicked
+        closeModalButton.onclick = function () {
+            modal.style.display = "none";
+        };
+
+        // Close the modal when clicking outside of it
+        window.onclick = function (event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
+    </script>
+
+    <script>
+        manage_user = document.querySelector('section ul #books');
+        manage_user.classList.add('active');
+    </script>
+</main>
+{% endblock main %}

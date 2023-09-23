@@ -1,0 +1,68 @@
+{% extends 'admin.html' %}
+{% block main %}
+<main>
+    <div class="modal" id="userForm">
+        <div class="modal-dialog model-dialog-centered model-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit user details.</h4>
+                    <a href="/manage_users" class="btn-close" id="closeModal" aria-label="Close"><i class='bx bx-x'></i></a>
+                </div>
+                <div class="modal-body">
+                    <form action="/update_user/{{ user.id }}" method="post" class="registration-form">
+                        {% if user %}
+                        <div class="form-group">
+                            <input type="text" id="name" value="{{user.name}}" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="email" value="{{user.email}}" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="password" value="{{user.password}}" id="password" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="role" value="{{user.role}}" id="role" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Update">
+                        </div>
+                        {% else %}
+                        <!-- The 'user' variable is not available -->
+                        <p>User data not found.</p>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // JavaScript to show the modal when the "Edit" button is clicked
+    const editButton = document.querySelector('.my-btn-success');
+    const userForm = document.getElementById('userForm');
+
+    if (editButton && userForm) {
+        editButton.addEventListener('click', function () {
+            const userName = editButton.getAttribute('data-user-name');
+            const userEmail = editButton.getAttribute('data-user-email');
+            const userPassword = editButton.getAttribute('data-user-password');
+            const userRole = editButton.getAttribute('data-user-role');
+
+            document.getElementById('name').value = userName;
+            document.getElementById('email').value = userEmail;
+            document.getElementById('password').value = userPassword;
+            document.getElementById('role').value = userRole;
+
+            userForm.style.display = "block";
+        });
+    }
+
+    // Check if the URL contains '/update_user/' to display the form
+    const currentURL = window.location.pathname;
+    if (currentURL.includes('/update_user/')) {
+        userForm.style.display = "block";
+    }
+</script>
+
+{% endblock main %}

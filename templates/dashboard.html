@@ -1,0 +1,98 @@
+{% extends 'admin.html' %}
+{% block main %}
+<main>
+    <div class="head-title">
+        <div class="left">
+            <h1>Dashboard</h1>
+            <ul class="breadcrumb">
+                <li>
+                    <a href="#">Dashboard</a>
+                </li>
+                <li><i class="bx bx-chevron-right"></i></li>
+                <li>
+                    <a class="active" href="#">Home</a>
+                </li>
+            </ul>
+        </div>
+        <a href="/admin_logout" class="btn-download">
+            <i class='bx bx-log-out'></i>
+            <span class="text">Logout</span>
+        </a>
+    </div>
+
+    <ul class="box-info">
+        <li>
+            <i class='bx bxs-book'></i>
+            <span class="text">
+                <h3>{{ total_books }}</h3>
+                <p>Books</p>
+            </span>
+        </li>
+        <li>
+            <i class="bx bxs-group"></i>
+            <span class="text">
+                <h3>{{total_users}}</h3>
+                <p>Users</p>
+            </span>
+        </li>
+    </ul>
+
+    <div class="table-data">
+        <div class="order">
+            <div class="head">
+                <h3>Available Books</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Title</th>
+                        <th>Writer</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in books %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ book.title }}</td>
+                        <td>{{ book.writer }}</td>
+                        <td>{{ book.category }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="order">
+            <div class="head">
+                <h3>Current Users</h3>
+            </div>
+            <table class="todo">
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.role }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+
+<script>
+    manage_user = document.querySelector('section ul #dashboard');
+    manage_user.classList.add('active');
+</script>
+
+{% endblock main %}
