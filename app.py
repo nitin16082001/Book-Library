@@ -219,19 +219,19 @@ def upload_book():
             pdf_filename = None
 
             if img_file:
-                img_filename = os.path.join('static\\Uploads\\Covers', secure_filename(img_file.filename))
+                img_filename = os.path.join('static/Uploads/Covers', secure_filename(img_file.filename))
                 img_file.save(img_filename)
             
             if pdf_file:
-                pdf_filename = os.path.join('static\\Uploads\\Books', pdf_file.filename)
+                pdf_filename = os.path.join('static/Uploads/Books', secure_filename(pdf_file.filename))
                 pdf_file.save(pdf_filename)
     
             new_book = Book(
                 title=title,
                 writer=writer,
                 category=category,
-                img_file=img_filename.split("\\")[3],
-                pdf_file=pdf_filename.split("\\")[3],
+                img_file=img_filename.split("/")[-1],  # Corrected path to use forward slash
+                pdf_file=pdf_filename.split("/")[-1],  # Corrected path to use forward slash
                 added_by=added_by,
                 added_at=added_at
             )
@@ -239,6 +239,7 @@ def upload_book():
             db.session.commit()
 
             return redirect(url_for("manage_books"))
+
 
 @app.route('/update_book/<int:id>', methods=['GET', 'POST'])
 def update_book(id):
