@@ -5,21 +5,20 @@ from werkzeug.utils import secure_filename
 import time
 import os
 
+# Flask app setup
 app = Flask(__name__, static_url_path='/static')
-
-app.secret_key = 'nitu1608'  # Replace 'your_secret_key_here' with a strong, unique key
+app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///book_registration.db'
-# app.config['TEMPLATES_AUTO_RELOAD'] = True  # This is optional but can help during development
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static/Uploads')
+
+# Ensure required directories exist
+for folder in ['Books', 'Covers']:
+    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+
+# DB setup
 db = SQLAlchemy(app)
 
-uploads_dir = os.path.join(app.root_path, 'static/Uploads')
-os.makedirs(uploads_dir, exist_ok=True)
-uploads_dir = os.path.join(app.root_path, 'static/Uploads/Books')
-os.makedirs(uploads_dir, exist_ok=True)
-uploads_dir = os.path.join(app.root_path, 'static/Uploads/Covers')
-os.makedirs(uploads_dir, exist_ok=True)
-
-
+# Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -29,7 +28,7 @@ class User(db.Model):
     regAt = db.Column(db.String(100), nullable=False)
 
 class Book(db.Model):
-    id = db.Column(db.Integer, primary_key=True, unique=True)
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     writer = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(100), nullable=False)
@@ -37,257 +36,190 @@ class Book(db.Model):
     pdf_file = db.Column(db.String(100), nullable=False)
     added_by = db.Column(db.String(100), nullable=False)
     added_at = db.Column(db.String(100), nullable=False)
-    likes = db.Column(db.Integer, nullable=False, default=0)
+    likes = db.Column(db.Integer, default=0, nullable=False)
 
-
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['passWord']
+    email = request.form['username']
+    password = request.form['passWord']
+    user = User.query.filter_by(email=email).first()
+    
+    if user and user.password == password:
+        session['logged_in'] = True
+        session['uname'] = user.name
+        return redirect(url_for('admin' if user.role == 'Admin' else 'home'))
 
-        user = User.query.filter_by(email=username).first()
-
-        if user and user.password == password:
-            if user.role == "Admin":
-                session['logged_in'] = True
-                session['uname'] = user.name
-                return redirect(url_for('admin'))
-            
-            else:
-                session['logged_in'] = True
-                session['uname'] = user.name
-                return redirect(url_for('home'))
-        else:
-            return redirect("/")
-
-@app.route('/home')
-def home():
-    if 'logged_in' in session:
-        featured_books_data = Book.query.order_by(desc(Book.id)).limit(4).all()
-        latest_books = Book.query.order_by(Book.id.desc()).slice(4, 12).all()
-        user = session.get('uname')
-        return render_template('Home.html', user=user, featured_books_data=featured_books_data, latest_books=latest_books)
-
-    else:
-        flash('Please log in to access the dashboard', 'danger')
-        return redirect("/")
-
-@app.route('/books')
-def list_books():
-    user = session.get('uname')
-    books = Book.query.all()
-    page = request.args.get('page', 1, type=int)
-    start_idx = (page - 1) * 12
-    end_idx = start_idx + 12
-    books_on_page = books[start_idx:end_idx]
-    total_pages = (len(books) + 12 - 1) // 12    
-    return render_template('books.html', books=books_on_page, current_page=page, total_pages=total_pages, user=user)
-
-@app.route('/about')
-def about():
-    user = session.get('uname')
-    return render_template('about.html', user=user)
+    flash('Invalid credentials', 'danger')
+    return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out', 'info')
-    return redirect("/")
+    return redirect(url_for('index'))
+
+@app.route('/home')
+def home():
+    if 'logged_in' not in session:
+        flash('Please log in to access the dashboard', 'danger')
+        return redirect(url_for('index'))
+
+    featured_books = Book.query.order_by(desc(Book.id)).limit(4).all()
+    latest_books = Book.query.order_by(desc(Book.id)).offset(4).limit(8).all()
+    return render_template('Home.html', user=session['uname'], featured_books_data=featured_books, latest_books=latest_books)
+
+@app.route('/books')
+def list_books():
+    page = request.args.get('page', 1, type=int)
+    per_page = 12
+    pagination = Book.query.paginate(page=page, per_page=per_page)
+    return render_template('books.html', books=pagination.items, current_page=page, total_pages=pagination.pages, user=session.get('uname'))
+
+@app.route('/about')
+def about():
+    return render_template('about.html', user=session.get('uname'))
 
 @app.route('/register', methods=['POST'])
 def register():
-    if request.method == 'POST':
-        uname = request.form['uname']
-        email = request.form['email']
-        password = request.form['password']
+    name = request.form['uname']
+    email = request.form['email']
+    password = request.form['password']
 
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            message = "Email already registered"
-            redirect_url = url_for('index')
-        else:
-            new_user = User(name=uname, email=email, password=password, role="Reader", regAt=str(time.strftime("%d-%m-%Y %I:%M:%S %p")))
-            db.session.add(new_user)
-            db.session.commit()
-            
-            message = "Registration successful"
-            redirect_url = url_for('index')
-        
-        return render_template('index.html', message=message, redirect_url=redirect_url)
+    if User.query.filter_by(email=email).first():
+        return render_template('index.html', message='Email already registered', redirect_url=url_for('index'))
 
-@app.route('/register_user', methods=['POST'])
-def register_user():
-    if request.method == 'POST':
-        uname = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            flash("User is already exist", "alert")
-        else:
-            new_user = User(name=uname, email=email, password=password, role="Reader", regAt=str(time.strftime("%d-%m-%Y %I:%M:%S %p")))
-            db.session.add(new_user)
-            db.session.commit()
-            
-        return redirect(url_for("manage_user"))
+    new_user = User(name=name, email=email, password=password, role="Reader", regAt=current_time())
+    db.session.add(new_user)
+    db.session.commit()
+    return render_template('index.html', message='Registration successful', redirect_url=url_for('index'))
 
 @app.route('/admin')
 def admin():
-    if 'logged_in' in session:
-        users = User.query.all()
-        books = Book.query.all()
-        total_users = User.query.count()
-        total_books = Book.query.count()
-        return render_template('dashboard.html', total_users=total_users, users=users, total_books=total_books, books=books)
-    else:
+    if 'logged_in' not in session:
         flash('Please log in to access the dashboard', 'danger')
-        return render_template('index.html')
+        return redirect(url_for('index'))
 
-
-@app.route('/admin_logout')
-def admin_logout():
-    session.clear()
-    flash('You have been logged out', 'info')
-    return redirect("/")
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
     users = User.query.all()
     books = Book.query.all()
-    total_users = User.query.count()
-    total_books = Book.query.count()
-    return render_template('dashboard.html', total_users=total_users, users=users, total_books=total_books, books=books)
+    return render_template('dashboard.html', total_users=len(users), users=users, total_books=len(books), books=books)
 
 @app.route('/manage_users')
 def manage_user():
-    user = User.query.all()
-    return render_template('manage_user.html', user=user)
+    return render_template('manage_user.html', user=User.query.all())
+
+@app.route('/register_user', methods=['POST'])
+def register_user():
+    name = request.form['name']
+    email = request.form['email']
+    password = request.form['password']
+
+    if User.query.filter_by(email=email).first():
+        flash('User already exists', 'warning')
+    else:
+        new_user = User(name=name, email=email, password=password, role="Reader", regAt=current_time())
+        db.session.add(new_user)
+        db.session.commit()
+    return redirect(url_for('manage_user'))
 
 @app.route('/update_user/<int:id>', methods=['GET', 'POST'])
 def update_user(id):
-    if request.method == "POST":
-        name = request.form['name']
-        password = request.form['password']
-        email = request.form['email']
-        role = request.form['role']
-        user = User.query.filter_by(id=id).first()
-        user.name = name
-        user.password=password
-        user.email = email
-        user.role = role
-        db.session.add(user)
+    user = User.query.get_or_404(id)
+    if request.method == 'POST':
+        user.name = request.form['name']
+        user.password = request.form['password']
+        user.email = request.form['email']
+        user.role = request.form['role']
         db.session.commit()
-        return redirect(url_for("manage_user"))
-    else:
-        user = User.query.filter_by(id=id).first()
-        return render_template("update_user.html", user=user)
+        return redirect(url_for('manage_user'))
+    return render_template('update_user.html', user=user)
 
-@app.route('/delete_user/<int:id>', methods=['GET', 'POST'])
+@app.route('/delete_user/<int:id>', methods=['POST'])
 def delete_user(id):
-    user = User.query.filter_by(id=id).first()
+    user = User.query.get_or_404(id)
     db.session.delete(user)
     db.session.commit()
-    return redirect(url_for("manage_user"))
+    return redirect(url_for('manage_user'))
 
 @app.route('/manage_books')
 def manage_books():
-    books = Book.query.all()
-    return render_template('manage_books.html', books=books)
+    return render_template('manage_books.html', books=Book.query.all())
 
 @app.route('/upload_book', methods=['POST'])
 def upload_book():
-    if request.method == "POST":
-        title = request.form['title']
-        writer = request.form['writer']
-        category = request.form['category']
-        img_file = request.files['img_file']
-        pdf_file = request.files['pdf_file']
-        added_by = session.get('uname')
-        added_at = str(time.strftime("%d-%m-%Y %I:%M:%S %p"))
+    title = request.form['title']
+    writer = request.form['writer']
+    category = request.form['category']
+    img_file = request.files['img_file']
+    pdf_file = request.files['pdf_file']
 
-        existing_book = Book.query.filter_by(title=title).first()
-        if existing_book:
-            flash("Book already exists", "alert")
-        else:
-            img_filename = None
-            pdf_filename = None
-
-            if img_file:
-                img_filename = os.path.join('static/Uploads/Covers', secure_filename(img_file.filename))
-                img_file.save(img_filename)
-            
-            if pdf_file:
-                pdf_filename = os.path.join('static/Uploads/Books', pdf_file.filename)
-                pdf_file.save(pdf_filename)
-    
-            new_book = Book(
-                title=title,
-                writer=writer,
-                category=category,
-                img_file=img_filename.split("/")[-1],  # Corrected path to use forward slash
-                pdf_file=pdf_filename.split("/")[-1],  # Corrected path to use forward slash
-                added_by=added_by,
-                added_at=added_at
-            )
-            db.session.add(new_book)
-            db.session.commit()
-
-            return redirect(url_for("manage_books"))
-
-
-@app.route('/update_book/<int:id>', methods=['GET', 'POST'])
-def update_book(id):
-    if request.method == "POST":
-        title = request.form['title']
-        writer = request.form['writer']
-        category = request.form['category']
-        book = Book.query.filter_by(id=id).first()
-        book.title = title
-        book.writer = writer
-        book.category = category
-        db.session.add(book)
-        db.session.commit()
-        return redirect(url_for("manage_books"))
-    else:
-        book = Book.query.filter_by(id=id).first()
-        return render_template("update_book.html", book=book)
-
-@app.route('/delete_book/<int:id>')
-def delete_book(id):
-    book = Book.query.get_or_404(id)
-    try:
-        if os.path.exists(f"static/Uploads/Covers/{book.img_file}"):
-            os.remove(f"static/Uploads/Covers/{book.img_file}")
-
-        if os.path.exists(f"static/Uploads/Books/{book.pdf_file}"):
-            os.remove(f"static/Uploads/Books/{book.pdf_file}")
-
-        db.session.delete(book)
-        db.session.commit()
-
-        flash('Book deleted successfully', 'success')
+    if Book.query.filter_by(title=title).first():
+        flash('Book already exists', 'warning')
         return redirect(url_for('manage_books'))
-    except Exception as e:
-        flash('An error occurred while deleting the book', 'danger')
-        db.session.rollback()
+
+    img_filename = save_file(img_file, 'Covers')
+    pdf_filename = save_file(pdf_file, 'Books')
+
+    new_book = Book(title=title, writer=writer, category=category, img_file=img_filename, pdf_file=pdf_filename, added_by=session.get('uname'), added_at=current_time())
+    db.session.add(new_book)
+    db.session.commit()
 
     return redirect(url_for('manage_books'))
 
+@app.route('/update_book/<int:id>', methods=['GET', 'POST'])
+def update_book(id):
+    book = Book.query.get_or_404(id)
+    if request.method == 'POST':
+        book.title = request.form['title']
+        book.writer = request.form['writer']
+        book.category = request.form['category']
+        db.session.commit()
+        return redirect(url_for('manage_books'))
+    return render_template('update_book.html', book=book)
 
+@app.route('/delete_book/<int:id>', methods=['POST'])
+def delete_book(id):
+    book = Book.query.get_or_404(id)
+    try:
+        for folder, file in [('Covers', book.img_file), ('Books', book.pdf_file)]:
+            path = os.path.join(app.config['UPLOAD_FOLDER'], folder, file)
+            if os.path.exists(path):
+                os.remove(path)
+        db.session.delete(book)
+        db.session.commit()
+        flash('Book deleted successfully', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('An error occurred while deleting the book', 'danger')
+    return redirect(url_for('manage_books'))
+
+# Helper functions
+def save_file(file, subfolder):
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], subfolder, filename)
+        file.save(file_path)
+        return filename
+    return ''
+
+def current_time():
+    return time.strftime("%d-%m-%Y %I:%M:%S %p")
+
+# Initialize DB and admin user
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
-        existing_user = User.query.filter_by(email='nitin16082001@gmail.com').first()        
-        if not existing_user:
-            new_user = User(name='Nitin Yadav', email='nitin16082001@gmail.com', password='nitu1608', role="Admin", regAt=str(time.strftime("%d-%m-%Y %I:%M:%S %p")))
-            db.session.add(new_user)
+        admin_email = 'nitin16082001@gmail.com'
+        if not User.query.filter_by(email=admin_email).first():
+            db.session.add(User(name='Nitin Yadav', email=admin_email, password='********', role='Admin', regAt=current_time()))
             db.session.commit()
-    
+
     app.run(debug=False)
